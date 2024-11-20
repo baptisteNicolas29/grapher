@@ -77,4 +77,8 @@ class Node(om.MObject):
             value: Any
             ) -> None:
 
-        self[key].set(*value)
+        if isinstance(value, tuple):
+            self[key].set(*value)
+
+        else:
+            self[key].set(value)

@@ -1,4 +1,5 @@
 from typing import Union, Any
+
 from maya.api import OpenMaya as om
 
 
@@ -34,11 +35,16 @@ class Plug(om.MPlug):
             value: Any
             ) -> None:
         # TODO: need to fix this part with the * operator
-        self[key].set(*value)
+        if isinstance(value, tuple):
+            self[key].set(*value)
+
+        else:
+            self[key].set(value)
 
     def set(self, *value: Any) -> None:
+        print(f'Plug.set -> {value}')
 
-        if isinstance(value, om.MPlug):
+        if isinstance(value[0], om.MPlug):
             self.__class__(value).connect(self)
 
         elif self.isCompound or self.isArray:
