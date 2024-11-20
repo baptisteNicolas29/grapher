@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Any
 from maya.api import OpenMaya as om
 
 
@@ -21,6 +21,57 @@ class Plug(om.MPlug):
             return self.__class__(self.elementByLogicalIndex(value))
 
         return self.__class__()
+
+    def parent(self, *args, **kwargs):
+        return self.__class__(super().parent(*args, **kwargs))
+
+    def child(self, *args, **kwargs):
+        return self.__class__(super().child(*args, **kwargs))
+
+    def __setitem__(
+            self,
+            key: str,
+            value: Any
+            ) -> None:
+        # TODO: need to fix this part with the * operator
+        self[key].set(*value)
+
+    def set(self, *value: Any) -> None:
+
+        if isinstance(value, om.MPlug):
+            self.__class__(value).connect(self)
+
+        elif self.isCompound or self.isArray:
+            for idx, val in enumerate(value):
+
+                if self.isCompound:
+                    self.child(idx).set(val)
+
+                if self.isArray:
+                    self.elementByLogicalIndex(idx).set(val)
+
+        elif len(value) == 16:
+            value = om.MMatrix(value)
+            matrixData = om.MFnMatrixData()
+            matobj = matrixData.create(value)
+            self.setMObject(matobj)
+
+        elif isinstance(value[0], int):
+            self.setInt(value[0])
+
+        elif isinstance(value[0], float):
+            self.setDouble(value[0])
+
+        elif isinstance(value[0], bool):
+            self.setBool(value[0])
+
+        elif isinstance(value[0], str):
+            self.setString(value[0])
+
+        elif isinstance(value[0], om.MMatrix):
+            matrixData = om.MFnMatrixData()
+            matobj = matrixData.create(value[0])
+            self.setMObject(matobj)
 
     def connect(self, other: 'Plug', force=False) -> None:
 

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Any
 
 from maya.api import OpenMaya as om
 from rig._lib.plug import Plug
@@ -71,9 +71,10 @@ class Node(om.MObject):
 
         return Plug(self.dependencyNode.findPlug(item, True))
 
-    def __setitem__(self, plug_name: str, other_plug: om.MPlug) -> None:
-        print(self, plug_name, other_plug)
+    def __setitem__(
+            self,
+            key: str,
+            value: Any
+            ) -> None:
 
-        modifier = om.MDagModifier()
-        modifier.connect(other_plug, self[plug_name])
-        modifier.doIt()
+        self[key].set(*value)
