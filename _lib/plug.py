@@ -32,7 +32,7 @@ class Plug(om.MPlug):
         return self.__class__(super().child(*args, **kwargs))
 
     def node(self) -> None:
-        return self.__class__(super().node())
+        return nde.Node(super().node())
 
     def __setitem__(
             self,
