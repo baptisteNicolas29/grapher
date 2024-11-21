@@ -2,6 +2,8 @@ from typing import Union, Any
 
 from maya.api import OpenMaya as om
 
+from rig._lib import node as nde
+
 
 class Plug(om.MPlug):
 
@@ -28,6 +30,9 @@ class Plug(om.MPlug):
 
     def child(self, *args, **kwargs):
         return self.__class__(super().child(*args, **kwargs))
+
+    def node(self) -> None:
+        return self.__class__(super().node())
 
     def __setitem__(
             self,
