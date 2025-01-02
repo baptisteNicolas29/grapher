@@ -1,6 +1,7 @@
 from typing import List, Any
 
 from maya import cmds
+from maya.api import OpenMaya as om
 
 from rig._lib.node import Node
 # from rig._lib.plug import Plug
@@ -15,17 +16,30 @@ class Graph(list):
         allow user to gathers nodes from string list
         args and kwargs work like cmds.ls command
         """
-        result = cmds.ls(*args, **kwargs)
+        result = cmds.ls(*args, **kwargs) or []
         return cls(map(cls.__initRegistred, result))
 
-    @classmethod
-    def __initRegistred(self, value: str) -> Any:
+    @staticmethod
+    def __initRegistred(value: str) -> Any:
         return Node(value)
 
     @classmethod
     def listHistory(cls, *args, **kwargs) -> 'Graph':
-        return cls(cmds.listHistory(*args, *kwargs))
+        """
+        desc: this function is a reimplementation of the cmds.listHistory function
+        allow user to gathers nodes from string list
+        args and kwargs work like cmds.listHistory command
+        """
+        result = cmds.listHistory(*args, **kwargs) or []
+        return cls(map(cls.__initRegistred, result))
 
     @classmethod
     def listRelatives(cls, *args, **kwargs) -> 'Graph':
-        return cls(cmds.listRelatives(*args, *kwargs))
+        """
+        desc: this function is a reimplementation of the cmds.listHistory function
+        allow user to gathers nodes from string list
+        args and kwargs work like cmds.listHistory command
+        """
+        print(args, kwargs)
+        result = cmds.listRelatives(*args, **kwargs) or []
+        return cls(map(cls.__initRegistred, result))
