@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import List, Any, Union
 
 from maya import cmds
 from maya.api import OpenMaya as om
@@ -7,7 +7,7 @@ from rig._lib.node import Node
 # from rig._lib.plug import Plug
 
 
-class Graph(list):
+class Graph(om.MSelectionList):
 
     @classmethod
     def ls(cls, *args, **kwargs) -> List[Node]:
@@ -17,7 +17,11 @@ class Graph(list):
         args and kwargs work like cmds.ls command
         """
         result = cmds.ls(*args, **kwargs) or []
-        return cls(map(cls.__initRegistred, result))
+        lst = cls()
+        for item in result:
+            lst.add(item)
+
+        return lst
 
     @staticmethod
     def __initRegistred(value: str) -> Any:
@@ -31,7 +35,12 @@ class Graph(list):
         args and kwargs work like cmds.listHistory command
         """
         result = cmds.listHistory(*args, **kwargs) or []
-        return cls(map(cls.__initRegistred, result))
+
+        lst = cls()
+        for item in result:
+            lst.add(item)
+
+        return lst
 
     @classmethod
     def listRelatives(cls, *args, **kwargs) -> 'Graph':
@@ -42,4 +51,43 @@ class Graph(list):
         """
         print(args, kwargs)
         result = cmds.listRelatives(*args, **kwargs) or []
-        return cls(map(cls.__initRegistred, result))
+
+        lst = cls()
+        for item in result:
+            lst.add(item)
+
+        return lst
+
+    def get(self, value: Union[str, int]) -> Any:
+        return self.getDependNode(value)
+
+    def __and__(self, other: om.MSelectionList) -> 'Graph':
+        '''
+        intersection
+        '''
+        print(type(self), type(other))
+        if not isinstance(other, om.MSelectionList):
+            raise TypeError(f'can not intersect Graph and {type(other)}')
+
+        final_lst = self.intersect(other)
+        return self.__class__(final_lst)
+
+    def __or__(self, other: om.MSelectionList) -> 'Graph':
+        '''
+        union
+        '''
+        if not isinstance(other, om.MSelectionList):
+            raise TypeError(f'can not unify Graph and {type(other)}')
+
+        return self.__class__(self.merge(other))
+
+    """
+    def __xor__(self, other: om.MSelectionList) -> 'Graph':
+        '''
+        symetrical difference
+        '''
+        if not isinstance(other, om.MSelectionList):
+            raise TypeError(f'can not make symetrical difference between Graph and {type(other)}')
+
+        return self
+    """
