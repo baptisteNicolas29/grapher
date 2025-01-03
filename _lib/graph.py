@@ -23,6 +23,11 @@ class Graph(om.MSelectionList):
 
         return lst
 
+    def createNode(self, typ: str, name=None, parent=None) -> Node:
+        node = Node.create(typ, name=name, parent=parent)
+        self.add(node)
+        return node
+
     @staticmethod
     def __initRegistred(value: str) -> Any:
         return Node(value)
