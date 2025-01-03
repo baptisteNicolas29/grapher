@@ -24,6 +24,14 @@ class Graph(om.MSelectionList):
         return lst
 
     def createNode(self, typ: str, name=None, parent=None) -> Node:
+        """
+        desc: this function allow node creation from Graph
+        created node will be added to graph
+        :param str: typ type of the created node
+        :param str: name name of the created node
+        :param Node: parent parent of the created node
+        :return Node: created Node
+        """
         node = Node.create(typ, name=name, parent=parent)
         self.add(node)
         return node
