@@ -4,7 +4,7 @@ from maya import cmds
 from maya.api import OpenMaya as om
 
 from rig._lib.node import Node
-# from rig._lib.plug import Plug
+from rig._lib.plug import Plug
 
 
 class Graph(om.MSelectionList):
@@ -64,7 +64,7 @@ class Graph(om.MSelectionList):
         return lst
 
     def get(self, value: Union[str, int]) -> Any:
-        return self.getDependNode(value)
+        return self.__initRegistred(self.getDependNode(value))
 
     def __and__(self, other: om.MSelectionList) -> 'Graph':
         '''
@@ -96,3 +96,7 @@ class Graph(om.MSelectionList):
 
         return self
     """
+
+    def __iter__(self) -> Union[Node, Plug]:
+        for idx in range(self.length()):
+            yield self.get(idx)
