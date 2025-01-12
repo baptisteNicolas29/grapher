@@ -82,7 +82,8 @@ class Graph(om.MSelectionList):
         if not isinstance(other, om.MSelectionList):
             raise TypeError(f'can not intersect Graph and {type(other)}')
 
-        final_lst = self.intersect(other)
+        final_lst = self.__class__().copy(self)
+        final_lst = final_lst.intersect(other)
         return self.__class__(final_lst)
 
     def __or__(self, other: om.MSelectionList) -> 'Graph':
@@ -92,7 +93,7 @@ class Graph(om.MSelectionList):
         if not isinstance(other, om.MSelectionList):
             raise TypeError(f'can not unify Graph and {type(other)}')
 
-        return self.__class__(self.merge(other))
+        return self.__class__().copy(self).merge(other)
 
     """
     def __xor__(self, other: om.MSelectionList) -> 'Graph':
@@ -111,3 +112,7 @@ class Graph(om.MSelectionList):
 
     def __contains__(self, item: om.MObject | om.MPlug | om.MDagPath) -> bool:
         return self.hasItem(item)
+
+    def __sub__(self, other) -> 'Graph':
+        copy = om.MSelectionList(self)
+        return copy.merge(other, strategy=om.MSelectionList.kRemoveFromList)
