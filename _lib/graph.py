@@ -95,16 +95,12 @@ class Graph(om.MSelectionList):
 
         return self.__class__().copy(self).merge(other)
 
-    """
     def __xor__(self, other: om.MSelectionList) -> 'Graph':
         '''
         symetrical difference
         '''
-        if not isinstance(other, om.MSelectionList):
-            raise TypeError(f'can not make symetrical difference between Graph and {type(other)}')
-
-        return self
-    """
+        copy = self.__class__().copy(self)
+        return copy.merge(other, strategy=om.MSelectionList.kXORWithList)
 
     def __iter__(self) -> Union[Node, Plug]:
         for idx in range(self.length()):
