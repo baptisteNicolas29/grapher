@@ -108,3 +108,6 @@ class Graph(om.MSelectionList):
     def __iter__(self) -> Union[Node, Plug]:
         for idx in range(self.length()):
             yield self.get(idx)
+
+    def __contains__(self, item: om.MObject | om.MPlug | om.MDagPath) -> bool:
+        return self.hasItem(item)
