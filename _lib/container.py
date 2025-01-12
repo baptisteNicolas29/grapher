@@ -1,5 +1,6 @@
 from typing import Union, List, Dict
 
+from maya import cmds
 from maya.api import OpenMaya as om
 
 from rig._lib.graph import Graph
@@ -60,13 +61,13 @@ class Container(om.MObject):
 
     @property
     def publishNodes(self) -> Dict[str, Node]:
-        names, nodes = self.fnContainer.getPublishedNames()
+        names, nodes = self.fnContainer.getPublishedNodes(0)
         nodes = [Node(node) for node in nodes]
         return dict(zip(names, nodes))
 
     @property
     def publishPlugs(self) -> Dict[str, Plug]:
-        plugs, names = self.fnContainer.getPublishNodes()
+        plugs, names = self.fnContainer.getPublishedPlugs()
         plugs = [Plug(plug) for plug in plugs]
         return dict(zip(names, plugs))
 
@@ -81,3 +82,14 @@ class Container(om.MObject):
     @property
     def rootTransform(self) -> None:
         return Node(self.fnContainer.getRootTransform())
+
+    def createNode(self, typ, name=None, parent=None) -> Node:
+
+        node = Node.create(typ, name=name, parent=parent)
+        self.addNode(node)
+        return node
+
+    def addNode(self, node: str | om.MObject) -> None:
+
+        node = Node(node)
+        cmds.container(self.name, addNode=str(node), e=True)
