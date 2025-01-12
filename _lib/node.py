@@ -53,7 +53,11 @@ class Node(om.MObject):
 
     @property
     def name(self) -> str:
-        return self.dependencyNode.uniqueName()
+
+        if self.dependencyNode.hasUniqueName():
+            return self.dependencyNode.name()
+        else:
+            return self.dependencyNode.absoluteName()
 
     @name.setter
     def name(self, value: str) -> None:
