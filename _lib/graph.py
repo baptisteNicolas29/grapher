@@ -71,6 +71,10 @@ class Graph(om.MSelectionList):
 
         return lst
 
+    def __repr__(self) -> str:
+        class_name = self.__class__.__name__
+        return f'{class_name}.ls({[str(x) for x in self]})'
+
     def get(self, value: Union[str, int]) -> Any:
         return self.__initRegistred(self.getDependNode(value))
 
