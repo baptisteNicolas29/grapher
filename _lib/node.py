@@ -57,7 +57,8 @@ class Node(om.MObject):
         if self.dependencyNode.hasUniqueName():
             return self.dependencyNode.name()
         else:
-            return self.dependencyNode.absoluteName()
+            return om.MFnDagNode(self).partialPathName()
+            # return self.dependencyNode.absoluteName()
 
     @name.setter
     def name(self, value: str) -> None:
