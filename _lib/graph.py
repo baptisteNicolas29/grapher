@@ -1,4 +1,4 @@
-from typing import List, Any, Union
+from typing import List, Any, Union, Optional
 
 from maya import cmds
 from maya.api import OpenMaya as om
@@ -92,6 +92,61 @@ class Graph(om.MSelectionList):
                 roots.add(item)
 
         return roots
+
+    @classmethod
+    def shortestParent(
+            cls,
+            node: Union[str, om.MObject],
+            graph: Union[om.MSelectionList, List[str], List[Node]]
+            ) -> Optional[Node]:
+
+        node = Node(node)
+
+        if isinstance(graph, om.MSelectionList):
+            graph = cls(graph)
+
+        elif not node.hasFn(om.MFn.kDagNode):
+            return
+
+        elif isinstance(graph, list):
+            tmp = Graph()
+
+            for node in graph:
+                tmp.add(node)
+
+            graph = tmp
+
+        else:
+            raise TypeError('second argument need to be list or om.MSelectionList')
+
+        # clear graph
+        if node in graph:
+            node_graph = Graph()
+            node_graph.add(node)
+            graph = graph - node_graph
+
+        dagNode = om.MFnDagNode(node)
+        dagPath = dagNode.getPath()
+
+        minimum = None
+        shortest = None
+        for other in graph:
+
+            if dagNode.isChildOf(other):
+                otherDagNode = om.MFnDagNode(other)
+                otherDagPath = otherDagNode.getPath()
+
+                tmp = dagPath.length() - otherDagPath.length()
+                if not minimum:
+                    minimum = tmp
+                    shortest = other
+
+                elif tmp < minimum:
+                    minimum = tmp
+                    shortest = other
+
+        if shortest:
+            return Node(shortest)
 
     @property
     def dagRoots(self) -> 'Graph':
