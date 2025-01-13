@@ -23,23 +23,6 @@ class Graph(om.MSelectionList):
 
         return lst
 
-    def createNode(self, typ: str, name=None, parent=None) -> Node:
-        """
-        desc: this function allow node creation from Graph
-        created node will be added to graph
-        :param str: typ type of the created node
-        :param str: name name of the created node
-        :param Node: parent parent of the created node
-        :return Node: created Node
-        """
-        node = Node.create(typ, name=name, parent=parent)
-        self.add(node)
-        return node
-
-    @staticmethod
-    def __initRegistred(value: str) -> Any:
-        return Node(value)
-
     @classmethod
     def listHistory(cls, *args, **kwargs) -> 'Graph':
         """
@@ -71,6 +54,66 @@ class Graph(om.MSelectionList):
 
         return lst
 
+    @classmethod
+    def getDagRoots(
+            cls,
+            nodes: Union[List[str], List[Node], om.MSelectionList],
+            safe=True
+            ) -> 'Graph':
+
+        if isinstance(nodes, list):
+            tmp = Graph()
+
+            for node in nodes:
+                tmp.add(node)
+
+            node = tmp
+
+        elif isinstance(nodes, om.MSelectionList):
+            nodes = cls(nodes)
+
+        previous = cls()
+        roots = cls()
+        for item in nodes:
+            previous.add(item)
+
+            if (not safe) and (not item.hasFn(om.MFn.MFnDagNode)):
+                raise TypeError(f'{node} is not a dagNode')
+
+            if safe and (not item.hasFn(om.MFn.kDagNode)):
+                continue
+
+            is_child = False
+            mfnDagNode = om.MFnDagNode(item)
+            for other in nodes - previous:
+                is_child |= mfnDagNode.isChildOf(other)
+
+            if not is_child:
+                roots.add(item)
+
+        return roots
+
+    @property
+    def dagRoots(self) -> 'Graph':
+        return self.getDagRoots(self, safe=True)
+
+    @staticmethod
+    def __initRegistred(value: str) -> Any:
+        return Node(value)
+
+    def createNode(self, typ: str, name=None, parent=None) -> Node:
+        """
+        desc: this function allow node creation from Graph
+        created node will be added to graph
+        :param str: typ type of the created node
+        :param str: name name of the created node
+        :param Node: parent parent of the created node
+        :return Node: created Node
+        """
+        node = Node.create(typ, name=name, parent=parent)
+        self.add(node)
+        return node
+
     def __repr__(self) -> str:
         class_name = self.__class__.__name__
         return f'{class_name}.ls({[str(x) for x in self]})'
@@ -94,10 +137,8 @@ class Graph(om.MSelectionList):
         '''
         union
         '''
-        if not isinstance(other, om.MSelectionList):
-            raise TypeError(f'can not unify Graph and {type(other)}')
-
-        return self.__class__().copy(self).merge(other)
+        copy = self.__class__().copy(self)
+        return copy(self).merge(other)
 
     def __xor__(self, other: om.MSelectionList) -> 'Graph':
         '''
@@ -113,6 +154,6 @@ class Graph(om.MSelectionList):
     def __contains__(self, item: om.MObject | om.MPlug | om.MDagPath) -> bool:
         return self.hasItem(item)
 
-    def __sub__(self, other) -> 'Graph':
-        copy = om.MSelectionList(self)
+    def __sub__(self, other: om.MSelectionList) -> 'Graph':
+        copy = self.__class__().copy(self)
         return copy.merge(other, strategy=om.MSelectionList.kRemoveFromList)
