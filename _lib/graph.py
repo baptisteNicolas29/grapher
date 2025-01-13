@@ -94,61 +94,6 @@ class Graph(om.MSelectionList):
         return roots
 
     @classmethod
-    def getShortestParent(
-            cls,
-            node: Union[str, om.MObject],
-            graph: Union[om.MSelectionList, List[str], List[Node]]
-            ) -> Optional[Node]:
-
-        node = Node(node)
-
-        if isinstance(graph, om.MSelectionList):
-            graph = cls(graph)
-
-        elif not node.hasFn(om.MFn.kDagNode):
-            return
-
-        elif isinstance(graph, list):
-            tmp = Graph()
-
-            for node in graph:
-                tmp.add(node)
-
-            graph = tmp
-
-        else:
-            raise TypeError('second argument need to be list or om.MSelectionList')
-
-        # clear graph
-        if node in graph:
-            node_graph = Graph()
-            node_graph.add(node)
-            graph = graph - node_graph
-
-        dagNode = om.MFnDagNode(node)
-        dagPath = dagNode.getPath()
-
-        minimum = None
-        shortest = None
-        for other in graph:
-
-            if dagNode.isChildOf(other):
-                otherDagNode = om.MFnDagNode(other)
-                otherDagPath = otherDagNode.getPath()
-
-                tmp = dagPath.length() - otherDagPath.length()
-                if not minimum:
-                    minimum = tmp
-                    shortest = other
-
-                elif tmp < minimum:
-                    minimum = tmp
-                    shortest = other
-
-        if shortest:
-            return Node(shortest)
-
-    @classmethod
     def getChildren(
             cls,
             node: Union[str, om.MObject],
@@ -193,7 +138,7 @@ class Graph(om.MSelectionList):
             cls,
             node: Union[str, om.MObject],
             graph: Union[om.MSelectionList, List[str], List[Node]]
-            ) -> Optional[Node]:
+            ) -> 'Graph':
 
         node = Node(node)
 
@@ -231,9 +176,56 @@ class Graph(om.MSelectionList):
 
         return parents
 
+    @classmethod
+    def getDirectChildren(
+            cls,
+            node: Union[str, om.MObject],
+            graph: Union[om.MSelectionList, List[str], List[Node]]
+            ) -> 'Graph':
+
+        childrens = cls.getChildren(node, graph)
+        childrens_copy = cls().copy(childrens)
+
+        to_remove = cls()
+        for child in childrens_copy:
+            for subChild in cls.getChildren(child, graph):
+                to_remove.add(subChild)
+
+        return childrens - to_remove
+
+    @classmethod
+    def getDirectParent(
+            cls,
+            node: Union[str, om.MObject],
+            graph: Union[om.MSelectionList, List[str], List[Node]]
+            ) -> Optional[Node]:
+
+        parents = cls.getParents(node, graph)
+        parents_copy = cls().copy(parents)
+
+        to_remove = cls()
+        for par in parents_copy:
+            for subParent in cls.getParents(par, graph):
+                to_remove.add(subParent)
+
+        if parent := parents - to_remove:
+            return parent.get(0)
+
     @property
     def dagRoots(self) -> 'Graph':
         return self.getDagRoots(self, safe=True)
+
+    def children(self, node: Union[str, om.MObject]) -> 'Graph':
+        return self.getChildren(node, self)
+
+    def parents(self, node: Union[str, om.MObject]) -> 'Graph':
+        return self.getParents(node, self)
+
+    def directChildren(self, node: Union[str, om.MObject]) -> 'Graph':
+        return self.getChildren(node, self)
+
+    def directParents(self, node: Union[str, om.MObject]) -> Optional[Node]:
+        return self.getParents(node, self)
 
     @staticmethod
     def __initRegistred(value: str) -> Any:
