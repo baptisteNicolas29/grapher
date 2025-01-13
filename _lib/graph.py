@@ -148,6 +148,46 @@ class Graph(om.MSelectionList):
         if shortest:
             return Node(shortest)
 
+    @classmethod
+    def getChildren(
+            cls,
+            node: Union[str, om.MObject],
+            graph: Union[om.MSelectionList, List[str], List[Node]]
+            ) -> 'Graph':
+
+        node = Node(node)
+        if not node.hasFn(om.MFn.kDagNode):
+            return
+
+        if isinstance(graph, om.MSelectionList):
+            graph = cls(graph)
+
+        elif isinstance(graph, list):
+            tmp = Graph()
+
+            for node in graph:
+                tmp.add(node)
+
+            graph = tmp
+
+        else:
+            raise TypeError('graph need to be list or om.MSelectionList')
+
+        # clear graph
+        if node in graph:
+            node_graph = Graph()
+            node_graph.add(node)
+            graph = graph - node_graph
+
+        childrens = cls()
+        for other in graph:
+            otherDagNode = om.MFnDagNode(other)
+
+            if otherDagNode.isChildOf(node):
+                childrens.add(other)
+
+        return childrens
+
     @property
     def dagRoots(self) -> 'Graph':
         return self.getDagRoots(self, safe=True)
