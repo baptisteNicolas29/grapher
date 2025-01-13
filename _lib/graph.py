@@ -94,7 +94,7 @@ class Graph(om.MSelectionList):
         return roots
 
     @classmethod
-    def shortestParent(
+    def getShortestParent(
             cls,
             node: Union[str, om.MObject],
             graph: Union[om.MSelectionList, List[str], List[Node]]
@@ -187,6 +187,49 @@ class Graph(om.MSelectionList):
                 childrens.add(other)
 
         return childrens
+
+    @classmethod
+    def getParents(
+            cls,
+            node: Union[str, om.MObject],
+            graph: Union[om.MSelectionList, List[str], List[Node]]
+            ) -> Optional[Node]:
+
+        node = Node(node)
+
+        if isinstance(graph, om.MSelectionList):
+            graph = cls(graph)
+
+        elif not node.hasFn(om.MFn.kDagNode):
+            return
+
+        elif isinstance(graph, list):
+            tmp = Graph()
+
+            for node in graph:
+                tmp.add(node)
+
+            graph = tmp
+
+        else:
+            raise TypeError('second argument need to be list or om.MSelectionList')
+
+        # clear graph
+        if node in graph:
+            node_graph = Graph()
+            node_graph.add(node)
+            graph = graph - node_graph
+
+        dagNode = om.MFnDagNode(node)
+        dagPath = dagNode.getPath()
+
+        parents = cls()
+        for other in graph:
+
+            if dagNode.isChildOf(other):
+                parents.add(other)
+
+        return parents
 
     @property
     def dagRoots(self) -> 'Graph':
