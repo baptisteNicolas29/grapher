@@ -1,4 +1,4 @@
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 
 from maya import cmds
 from maya.api import OpenMaya as om
@@ -8,40 +8,48 @@ from rig._lib.node import Node
 from rig._lib.plug import Plug
 
 
-class Container(om.MObject):
+class Container(Node):
 
     @classmethod
     def create(cls, name=None):
         obj = om.MFnDependencyNode().create('container', name)
         return cls(obj)
 
+    @classmethod
+    def containerize(
+            cls,
+            graph: Graph,
+            name: str | None = None,
+            setRootTransform: bool = False
+            ) -> 'Container':
+
+        container = cls.create(name)
+        for node in graph:
+            container.addNode(node)
+
+        if setRootTransform:
+            if dagRoots := graph.dagRoots:
+                container.rootTransform = dagRoots.get(0)
+
+        return container
+
     def __init__(self, entry: Union[str, om.MObject]) -> None:
 
-        if isinstance(entry, str):
-            selList = om.MSelectionList()
-            selList.add(entry)
-            super().__init__(selList.getDependNode(0))
-
-        else:
-            super().__init__(entry)
-
+        super().__init__(entry)
         self.fnContainer = om.MFnContainerNode(self)
 
-    @property
-    def name(self) -> str:
+    def __repr__(self) -> str:
+        return f'Container("{self.name}")'
 
-        if self.fnContainer.hasUniqueName():
-            return self.fnContainer.name()
-        else:
-            return self.fnContainer.absoluteName()
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self.fnContainer.setName(value)
+    def __str__(self) -> str:
+        return self.name
 
     @property
-    def parent(self) -> 'Container':
-        return self.__class__(self.fnContainer.getParentContainer())
+    def parent(self) -> Optional['Container']:
+        if parent := self.fnContainer.getParentContainer():
+            if parent.isNull():
+                return
+            return self.__class__(parent)
 
     @property
     def children(self) -> List['Container']:
@@ -59,11 +67,22 @@ class Container(om.MObject):
             sel.add(item)
         return sel
 
-    @property
-    def publishNodes(self) -> Dict[str, Node]:
-        names, nodes = self.fnContainer.getPublishedNodes(0)
+    def __publishNodes(self, attr) -> Dict[str, Node]:
+        names, nodes = self.fnContainer.getPublishedNodes(attr)
         nodes = [Node(node) for node in nodes]
         return dict(zip(names, nodes))
+
+    @property
+    def publishParentAnchor(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kParentAnchor)
+
+    @property
+    def publishChildAnchor(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kChildAnchor)
+
+    @property
+    def publishNodes(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kGeneric)
 
     @property
     def publishPlugs(self) -> Dict[str, Plug]:
@@ -82,6 +101,23 @@ class Container(om.MObject):
     @property
     def rootTransform(self) -> None:
         return Node(self.fnContainer.getRootTransform())
+
+    @rootTransform.setter
+    def rootTransform(self, node: str | Node | None) -> None:
+
+        if node is None:
+            src = Node(self)['rt'].source()
+            if src.isNull:
+                return
+            Plug(src).disconnect(Node(self.name)['rt'])
+            return
+
+        node = Node(node)
+
+        if node not in self.nodes:
+            raise NameError(f'{node} is not part of the container')
+
+        node['msg'] >> Node(self)['rt']
 
     def createNode(self, typ, name=None, parent=None) -> Node:
 
