@@ -45,18 +45,6 @@ class Container(Node):
         return self.name
 
     @property
-    def name(self) -> str:
-
-        if self.fnContainer.hasUniqueName():
-            return self.fnContainer.name()
-        else:
-            return self.fnContainer.absoluteName()
-
-    @name.setter
-    def name(self, value: str) -> None:
-        self.fnContainer.setName(value)
-
-    @property
     def parent(self) -> Optional['Container']:
         if parent := self.fnContainer.getParentContainer():
             if parent.isNull():
@@ -79,11 +67,22 @@ class Container(Node):
             sel.add(item)
         return sel
 
-    @property
-    def publishNodes(self) -> Dict[str, Node]:
-        names, nodes = self.fnContainer.getPublishedNodes(0)
+    def __publishNodes(self, attr) -> Dict[str, Node]:
+        names, nodes = self.fnContainer.getPublishedNodes(attr)
         nodes = [Node(node) for node in nodes]
         return dict(zip(names, nodes))
+
+    @property
+    def publishParentAnchor(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kParentAnchor)
+
+    @property
+    def publishChildAnchor(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kChildAnchor)
+
+    @property
+    def publishNodes(self) -> Dict[str, Node]:
+        return self.__publishNodes(self.fnContainer.kGeneric)
 
     @property
     def publishPlugs(self) -> Dict[str, Plug]:
