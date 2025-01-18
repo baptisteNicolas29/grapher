@@ -1,5 +1,6 @@
 from typing import Union, Any
 
+from maya import cmds
 from maya.api import OpenMaya as om
 from rig._lib.plug import Plug
 
@@ -87,3 +88,8 @@ class Node(om.MObject):
 
         else:
             self[key].set(value)
+
+    def addAttr(self, **kwargs) -> Plug:
+        name = kwargs.get('ln', kwargs.get('sn'))
+        cmds.addAttr(self.name, **kwargs)
+        return self[name]
