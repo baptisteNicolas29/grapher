@@ -3,9 +3,9 @@ from typing import Union, List, Dict, Optional
 from maya import cmds
 from maya.api import OpenMaya as om
 
-from rig._lib.graph import Graph
-from rig._lib.node import Node
-from rig._lib.plug import Plug
+from .graph import Graph
+from .node import Node
+from .plug import Plug
 
 
 class Container(Node):
