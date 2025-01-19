@@ -1,7 +1,8 @@
 from typing import Union, Any
 
+from maya import cmds
 from maya.api import OpenMaya as om
-from rig._lib.plug import Plug
+from .plug import Plug
 
 
 class Node(om.MObject):
@@ -53,7 +54,12 @@ class Node(om.MObject):
 
     @property
     def name(self) -> str:
-        return self.dependencyNode.uniqueName()
+
+        if self.dependencyNode.hasUniqueName():
+            return self.dependencyNode.name()
+        else:
+            return om.MFnDagNode(self).partialPathName()
+            # return self.dependencyNode.absoluteName()
 
     @name.setter
     def name(self, value: str) -> None:
@@ -82,3 +88,8 @@ class Node(om.MObject):
 
         else:
             self[key].set(value)
+
+    def addAttr(self, **kwargs) -> Plug:
+        name = kwargs.get('ln', kwargs.get('sn'))
+        cmds.addAttr(self.name, **kwargs)
+        return self[name]
