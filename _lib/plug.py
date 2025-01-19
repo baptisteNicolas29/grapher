@@ -1,4 +1,4 @@
-from typing import Union, Any
+from typing import Union, Any, List
 
 from maya.api import OpenMaya as om
 
@@ -6,6 +6,38 @@ from rig._lib import node as nde
 
 
 class Plug(om.MPlug):
+
+    @classmethod
+    def fromString(cls, value: str) -> 'Plug':
+
+        selList = om.MSelectionList()
+        selList.add(value)
+        return cls(selList.getPlug(0))
+
+    def connectedTo(self, *args, **kwargs) -> List['Plug']:
+
+        plugs = []
+        for item in super().connectedTo(*args, **kwargs) or []:
+            plugs.append(self.__class__(item))
+
+        return plugs
+
+    def proxied(self, *args, **kwargs) -> List['Plug']:
+        plugs = []
+        for plug in self.proxied():
+            plugs.append(plug)
+
+        return plugs
+
+    def source(self):
+        return Plug(super().source())
+
+    def destinations(self) -> List['Plug']:
+        plugs = []
+        for item in super().destinations() or []:
+            plugs.append(self.__class__(item))
+
+        return plugs
 
     def __getitem__(self, value: Union[str, int]) -> 'Plug':
 
@@ -46,8 +78,24 @@ class Plug(om.MPlug):
         else:
             self[key].set(value)
 
+    def __str__(self) -> str:
+        attr_name = self.partialName(
+                includeNodeName=True,
+                useLongNames=True,
+                # useFullAttributePath=True
+                )
+        return attr_name
+
+    def __repr__(self) -> str:
+        attr_name = self.partialName(
+                includeNodeName=True,
+                useLongNames=True,
+                useFullAttributePath=True
+                )
+
+        return f'Plug.fromString("{attr_name}")'
+
     def set(self, *value: Any) -> None:
-        print(f'Plug.set -> {value}')
 
         if isinstance(value[0], om.MPlug):
             self.__class__(value).connect(self)
