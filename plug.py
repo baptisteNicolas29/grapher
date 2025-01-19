@@ -2,7 +2,7 @@ from typing import Union, Any, List
 
 from maya.api import OpenMaya as om
 
-from rig._lib import node as nde
+from . import node as nde
 
 
 class Plug(om.MPlug):

@@ -3,8 +3,8 @@ from typing import List, Any, Union, Optional
 from maya import cmds
 from maya.api import OpenMaya as om
 
-from rig._lib.node import Node
-from rig._lib.plug import Plug
+from .node import Node
+from .plug import Plug
 
 
 class Graph(om.MSelectionList):

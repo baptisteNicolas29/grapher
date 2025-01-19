@@ -2,7 +2,7 @@ from typing import Union, Any
 
 from maya import cmds
 from maya.api import OpenMaya as om
-from rig._lib.plug import Plug
+from .plug import Plug
 
 
 class Node(om.MObject):
