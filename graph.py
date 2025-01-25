@@ -86,7 +86,8 @@ class Graph(om.MSelectionList):
             is_child = False
             mfnDagNode = om.MFnDagNode(item)
             for other in nodes - previous:
-                is_child |= mfnDagNode.isChildOf(other)
+                if other.hasFn(om.MFn.kDagNode):
+                    is_child |= mfnDagNode.isChildOf(other)
 
             if not is_child:
                 roots.add(item)
