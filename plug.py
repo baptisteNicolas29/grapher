@@ -41,19 +41,19 @@ class Plug(om.MPlug):
 
     def __getitem__(self, value: Union[str, int]) -> 'Plug':
 
-        if self.isCompound and isinstance(value, str):
+        if self.isArray and isinstance(value, int):
+            return self.__class__(self.elementByLogicalIndex(value))
+
+        elif self.isCompound and isinstance(value, str):
             for idx in range(self.numChildren()):
                 ln = self.child(idx).name()
-                sn = self.child(idx).partialName(useAlias=True)
+                sn = self.child(idx).partialName(useAlias=True).split('.')[-1]
 
                 if value in [ln, sn]:
                     return self.__class__(self.child(idx))
 
         elif self.isCompound and isinstance(value, int):
             return self.__class__(self.child(value))
-
-        elif self.isArray and isinstance(value, int):
-            return self.__class__(self.elementByLogicalIndex(value))
 
         return self.__class__()
 
