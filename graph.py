@@ -1,10 +1,9 @@
-from typing import List, Any, Union, Optional
+from typing import List, Any, Union, Optional, Iterator
 
 from maya import cmds
 from maya.api import OpenMaya as om
 
 from .node import Node
-from .plug import Plug
 
 
 class Graph(om.MSelectionList):
@@ -60,6 +59,12 @@ class Graph(om.MSelectionList):
             nodes: Union[List[str], List[Node], om.MSelectionList],
             safe=True
             ) -> 'Graph':
+        """
+        :desc: this method get dag root from given nodes
+        :param List[str | Node] | MSelectionList nodes: nodes you want dag roots on
+        :return: the founded relative dagRoots
+        :rtype: Graph
+        """
 
         if isinstance(nodes, list):
             tmp = Graph()
@@ -167,7 +172,6 @@ class Graph(om.MSelectionList):
             graph = graph - node_graph
 
         dagNode = om.MFnDagNode(node)
-        dagPath = dagNode.getPath()
 
         parents = cls()
         for other in graph:
@@ -252,6 +256,29 @@ class Graph(om.MSelectionList):
     def get(self, value: Union[str, int]) -> Any:
         return self.__initRegistred(self.getDependNode(value))
 
+    def __len__(self) -> int:
+        return self.length()
+
+    def __getitem__(self, value: int | str | slice) -> Node:
+
+        if isinstance(value, int):
+            # implementation of the negative getting exemple self[-1]
+            value = len(self) + value if value < 0 else value
+            print(f'{value=}')
+            return self.__initRegistred(self.getDependNode(value))
+
+        if isinstance(value, slice):
+            return self.__class__.ls(self.getSelectionStrings()[value])
+
+        elif isinstance(value, str):
+
+            if value not in self.getSelectionStrings():
+                raise NameError(f'__getitem__ fail: {value} not in the Graph')
+
+            idx = self.getSelectionStrings().index(value)
+
+            return self.__initRegistred(self.getDependNode(idx))
+
     def __and__(self, other: om.MSelectionList) -> 'Graph':
         '''
         intersection
@@ -278,7 +305,10 @@ class Graph(om.MSelectionList):
         copy = self.__class__().copy(self)
         return copy.merge(other, strategy=om.MSelectionList.kXORWithList)
 
-    def __iter__(self) -> Union[Node, Plug]:
+    def __iter__(self) -> Iterator[Node]:
+        '''
+        :desc: return iterator
+        '''
         for idx in range(self.length()):
             yield self.get(idx)
 
