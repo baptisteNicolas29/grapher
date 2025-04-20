@@ -29,6 +29,14 @@ class Node(om.MObject):
 
         self.dependencyNode = om.MFnDependencyNode(self)
 
+    def __repr__(self) -> str:
+
+        cls_name = self.__class__.__name__
+        typ = f'"{cmds.nodeType(self.name)}"'
+        name = f'name="{self.name}"'
+
+        return f'{cls_name}.create({typ}, {name})'
+
     def __str__(self) -> str:
         return self.name
 
